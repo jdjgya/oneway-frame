@@ -20,7 +20,7 @@ import (
 
 const (
 	name   = "name"
-	module = "forwarder"
+	module = "onewayer"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 	osExit   = os.Exit
 )
 
-type Forwarder struct {
+type Onewayer struct {
 	Input    string
 	Transit  string
 	Process  string
@@ -42,78 +42,78 @@ type Forwarder struct {
 func InitWorker() Worker {
 	logger := log.GetLogger(module)
 
-	return &Forwarder{
+	return &Onewayer{
 		log:  logger,
 		logf: logger.Sugar(),
 	}
 }
 
-func (f *Forwarder) getParterConfig(pluginType string) (string, interface{}) {
+func (o *Onewayer) getParterConfig(pluginType string) (string, interface{}) {
 	rawConfig := configer.Get(pluginType)
 	pluginName := (rawConfig.(map[string]interface{}))[name].(string)
 	parterName := strings.Join([]string{pluginType, pluginName}, "-")
 
 	switch pluginType {
 	case plugin.Input:
-		f.Input = pluginName
+		o.Input = pluginName
 		plug.Parters[parterName] = input.Plugin[pluginName]
 	case plugin.Transit:
-		f.Transit = pluginName
+		o.Transit = pluginName
 		plug.Parters[parterName] = transit.Plugin[pluginName]
 	case plugin.Process:
-		f.Process = pluginName
+		o.Process = pluginName
 		plug.Parters[parterName] = process.Plugin[pluginName]
 	case plugin.Output:
-		f.Output = pluginName
+		o.Output = pluginName
 		plug.Parters[parterName] = output.Plugin[pluginName]
 	}
 
 	return parterName, rawConfig
 }
 
-func (f *Forwarder) setParterConfig(parterName string, parterConfig interface{}) {
+func (o *Onewayer) setParterConfig(parterName string, parterConfig interface{}) {
 	plug.Parters[parterName].SetConfig(parterConfig)
 	err := plug.Parters[parterName].CheckConfig()
 	if err != nil {
-		f.logf.Errorf("failed to set parter config. error details: %s", err.Error())
+		o.logf.Errorf("failed to set parter config. error details: %s", err.Error())
 		osExit(1)
 	}
 }
 
-func (f *Forwarder) SetParter(pluginType string) {
-	parterName, parterConfig := f.getParterConfig(pluginType)
-	f.setParterConfig(parterName, parterConfig)
+func (o *Onewayer) SetParter(pluginType string) {
+	parterName, parterConfig := o.getParterConfig(pluginType)
+	o.setParterConfig(parterName, parterConfig)
 }
 
-func (f *Forwarder) StartParters() {
-	f.logf.Infof("start input plugin(%s)", f.Input)
-	go input.Plugin[f.Input].DoInput()
+func (o *Onewayer) StartParters() {
+	o.logf.Infof("start input plugin(%s)", o.Input)
+	go input.Plugin[o.Input].DoInput()
 
-	f.logf.Infof("start transit plugin(%s)", f.Transit)
-	go transit.Plugin[f.Transit].DoTransit()
+	o.logf.Infof("start transit plugin(%s)", o.Transit)
+	go transit.Plugin[o.Transit].DoTransit()
 
-	f.logf.Infof("start process plugin(%s)", f.Process)
-	go process.Plugin[f.Process].DoProcess()
+	o.logf.Infof("start process plugin(%s)", o.Process)
+	go process.Plugin[o.Process].DoProcess()
 
-	f.logf.Infof("start output plugin(%s)", f.Output)
-	go output.Plugin[f.Output].DoOutput()
+	o.logf.Infof("start output plugin(%s)", o.Output)
+	go output.Plugin[o.Output].DoOutput()
 }
 
-func (f *Forwarder) StopParters() {
-	input.Plugin[f.Input].Stop()
-	f.logf.Infof("stop input plugin(%s)", f.Input)
+func (o *Onewayer) StopParters() {
+	input.Plugin[o.Input].Stop()
+	o.logf.Infof("stop input plugin(%s)", o.Input)
 
-	transit.Plugin[f.Transit].Stop()
-	f.logf.Infof("stop transit plugin(%s)", f.Transit)
+	transit.Plugin[o.Transit].Stop()
+	o.logf.Infof("stop transit plugin(%s)", o.Transit)
 
-	process.Plugin[f.Process].Stop()
-	f.logf.Infof("stop process plugin(%s)", f.Process)
+	process.Plugin[o.Process].Stop()
+	o.logf.Infof("stop process plugin(%s)", o.Process)
 
-	output.Plugin[f.Output].Stop()
-	f.logf.Infof("stop output plugin(%s)", f.Output)
+	output.Plugin[o.Output].Stop()
+	o.logf.Infof("stop output plugin(%s)", o.Output)
 }
 
-func (f *Forwarder) getCronnerConfig(pluginType string) map[string]map[interface{}]interface{} {
+func (o *Onewayer) getCronnerConfig(pluginType string) map[string]map[interface{}]interface{} {
 	cronConfigs := make(map[string]map[interface{}]interface{})
 	rawConfig := reflect.ValueOf(configer.Get(pluginType))
 
@@ -130,11 +130,11 @@ func (f *Forwarder) getCronnerConfig(pluginType string) map[string]map[interface
 	return cronConfigs
 }
 
-func (f *Forwarder) setCronnerConfig(pluginType string, cronConfigs map[string]map[interface{}]interface{}) {
+func (o *Onewayer) setCronnerConfig(pluginType string, cronConfigs map[string]map[interface{}]interface{}) {
 	var cronName string
 	defer func() {
 		if err := recover(); err != nil {
-			f.logf.Errorf("%s cronjob plugin(%s) was not defined", pluginType, cronName)
+			o.logf.Errorf("%s cronjob plugin(%s) was not defined", pluginType, cronName)
 			osExit(1)
 		}
 	}()
@@ -144,34 +144,34 @@ func (f *Forwarder) setCronnerConfig(pluginType string, cronConfigs map[string]m
 		plug.Cronners[cronner].SetConfig(cronConfig)
 		err := plug.Cronners[cronner].CheckConfig()
 		if err != nil {
-			f.logf.Errorf("failed to set cronjob plugin(%s). error: %s", cronName, err.Error())
+			o.logf.Errorf("failed to set cronjob plugin(%s). error: %s", cronName, err.Error())
 			osExit(1)
 		}
 
-		f.CronJobs = append(f.CronJobs, cronName)
+		o.CronJobs = append(o.CronJobs, cronName)
 	}
 }
 
-func (f *Forwarder) SetCronner(pluginType string) {
-	cronConfigs := f.getCronnerConfig(pluginType)
-	f.setCronnerConfig(pluginType, cronConfigs)
+func (o *Onewayer) SetCronner(pluginType string) {
+	cronConfigs := o.getCronnerConfig(pluginType)
+	o.setCronnerConfig(pluginType, cronConfigs)
 }
 
-func (f *Forwarder) StartCronners() {
-	for _, cronName := range f.CronJobs {
-		f.logf.Infof("start cronjob plugin(%s)", cronName)
+func (o *Onewayer) StartCronners() {
+	for _, cronName := range o.CronJobs {
+		o.logf.Infof("start cronjob plugin(%s)", cronName)
 		go cronjob.Plugin[cronName].DoSchedule()
 	}
 }
 
-func (f *Forwarder) StopCronners() {
-	for _, cronName := range f.CronJobs {
+func (o *Onewayer) StopCronners() {
+	for _, cronName := range o.CronJobs {
 		cronjob.Plugin[cronName].Stop()
-		f.logf.Infof("stop cronjob plugin(%s)", cronName)
+		o.logf.Infof("stop cronjob plugin(%s)", cronName)
 	}
 }
 
-func (f *Forwarder) GetStatus() bool {
+func (o *Onewayer) GetStatus() bool {
 	areAllPluginsCompleted := plugin.InputStatus.Completed && plugin.TransitStatus.Completed && plugin.ProcessStatus.Completed && plugin.OutputStatus.Completed
 	return areAllPluginsCompleted
 }

@@ -286,11 +286,11 @@ func TestSetCronjobFailed(t *testing.T) {
 	}
 
 	logger := log.GetLogger(module)
-	testForwarder := &Forwarder{
+	testOnewayer := &Onewayer{
 		log:  logger,
 		logf: logger.Sugar(),
 	}
-	testForwarder.setCronnerConfig(plugin.CronJob, testConf)
+	testOnewayer.setCronnerConfig(plugin.CronJob, testConf)
 	assert.Equal(t, 1, testReturnCode, "failed to prevent invalid cronjob conf")
 
 	delete(plug.Cronners, parter)
