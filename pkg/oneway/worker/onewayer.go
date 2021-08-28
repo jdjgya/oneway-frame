@@ -1,21 +1,20 @@
 package worker
 
 import (
-	"onewayframe/pkg/config"
-	"onewayframe/pkg/log"
-	"onewayframe/pkg/plugin"
-	"onewayframe/pkg/plugin/cronjob"
-	"onewayframe/pkg/plugin/input"
-	"onewayframe/pkg/plugin/output"
-	"onewayframe/pkg/plugin/plug"
-	"onewayframe/pkg/plugin/process"
-	"onewayframe/pkg/plugin/transit"
-
 	"os"
 	"reflect"
 	"strings"
 	"sync"
 
+	"github.com/jdjgya/service-frame/pkg/config"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/cronjob"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/input"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/output"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/plug"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/process"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/transit"
 	"go.uber.org/zap"
 )
 

@@ -1,0 +1,18 @@
+input:
+  name: "dummy"
+
+transit:
+  name: "dummy"
+
+process:
+  name: "dummy"
+
+output:
+  name: "dummy"
+
+cronjobs:
+  - name: "dummy"
+    schedule: "0 */1 * * * *"
+
+channelSize: 1000
+oneTimeExec: True

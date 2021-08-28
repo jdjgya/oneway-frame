@@ -3,11 +3,11 @@ package process
 import (
 	"context"
 	"errors"
-	"onewayframe/pkg/plugin"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/stretchr/testify/assert"
 )
 

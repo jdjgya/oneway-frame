@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"onewayframe/pkg/plugin"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/stretchr/testify/assert"
 )
 

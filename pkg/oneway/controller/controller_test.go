@@ -1,10 +1,6 @@
 package controller
 
 import (
-	"onewayframe/pkg/config"
-	"onewayframe/pkg/log"
-	"onewayframe/pkg/plugin"
-
 	"context"
 	"errors"
 	"io"
@@ -13,6 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jdjgya/service-frame/pkg/config"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
