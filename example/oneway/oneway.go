@@ -1,12 +1,9 @@
-package exampleoneway
+package main
 
-import (
-	"github.com/jdjgya/service-frame/pkg/frame/oneway/controller"
-)
+import "github.com/jdjgya/service-frame/pkg/oneway/controller"
 
 func main() {
-	c := controller.GetInstance()
-	c.Init
+	controller.GetInstance()
 	// c := controller.GetInstance()
 	// c.InitService()
 
