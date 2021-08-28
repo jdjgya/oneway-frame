@@ -2,9 +2,9 @@ package cronjob
 
 import (
 	"context"
-	"onewayframe/pkg/plugin/plug"
 	"sync"
 
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/plug"
 	"github.com/robfig/cron"
 )
 

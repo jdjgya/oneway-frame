@@ -1,8 +1,6 @@
 package input
 
 import (
-	"onewayframe/pkg/plugin"
-
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/stretchr/testify/assert"
 )
 

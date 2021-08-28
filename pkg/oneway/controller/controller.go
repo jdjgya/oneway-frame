@@ -12,11 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"onewayframe/pkg/config"
-	"onewayframe/pkg/log"
-	"onewayframe/pkg/plugin"
-	"onewayframe/pkg/worker"
-
+	"github.com/jdjgya/service-frame/pkg/config"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/jdjgya/service-frame/pkg/oneway/worker"
 	"go.uber.org/zap"
 )
 

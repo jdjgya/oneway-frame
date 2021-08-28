@@ -2,10 +2,12 @@ package input
 
 import (
 	"context"
-	"onewayframe/pkg/plugin"
-	"onewayframe/pkg/plugin/plug"
+
 	"sync"
 	"time"
+
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/plug"
 )
 
 var (

@@ -2,14 +2,15 @@ package aggregatemetric
 
 import (
 	"context"
-	"onewayframe/pkg/log"
-	"onewayframe/pkg/plugin"
-	"onewayframe/pkg/plugin/cronjob"
+
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/bmizerany/assert"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/cronjob"
 )
 
 var (

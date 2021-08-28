@@ -3,14 +3,15 @@ package aggregatemetric
 import (
 	"context"
 	"encoding/json"
-	"onewayframe/pkg/log"
-	"onewayframe/pkg/plugin"
-	"onewayframe/pkg/plugin/cronjob"
+
 	"sync"
 	"sync/atomic"
 	"unsafe"
 
 	"github.com/goinggo/mapstructure"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/jdjgya/service-frame/pkg/oneway/plugin/cronjob"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/validator.v9"
 )
