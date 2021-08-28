@@ -1,11 +1,11 @@
 package main
 
 import (
-	_ "exampleoneway/plugin/cronjob"
-	_ "exampleoneway/plugin/input"
-	_ "exampleoneway/plugin/output"
-	_ "exampleoneway/plugin/process"
-	_ "exampleoneway/plugin/transit"
+	_ "github.com/jdjgya/service-frame/example/oneway/plugin/cronjob"
+	_ "github.com/jdjgya/service-frame/example/oneway/plugin/input"
+	_ "github.com/jdjgya/service-frame/example/oneway/plugin/output"
+	_ "github.com/jdjgya/service-frame/example/oneway/plugin/process"
+	_ "github.com/jdjgya/service-frame/example/oneway/plugin/transit"
 
 	"github.com/jdjgya/service-frame/pkg/oneway/controller"
 )
@@ -13,6 +13,7 @@ import (
 func main() {
 	c := controller.GetInstance()
 	c.InitService()
+	c.ActivateService()
 
 	c.Start()
 
