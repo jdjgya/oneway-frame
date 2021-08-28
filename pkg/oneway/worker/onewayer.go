@@ -86,17 +86,17 @@ func (f *Forwarder) SetParter(pluginType string) {
 }
 
 func (f *Forwarder) StartParters() {
-	go input.Plugin[f.Input].DoInput()
 	f.logf.Infof("start input plugin(%s)", f.Input)
+	go input.Plugin[f.Input].DoInput()
 
-	go transit.Plugin[f.Transit].DoTransit()
 	f.logf.Infof("start transit plugin(%s)", f.Transit)
+	go transit.Plugin[f.Transit].DoTransit()
 
-	go process.Plugin[f.Process].DoProcess()
 	f.logf.Infof("start process plugin(%s)", f.Process)
+	go process.Plugin[f.Process].DoProcess()
 
-	go output.Plugin[f.Output].DoOutput()
 	f.logf.Infof("start output plugin(%s)", f.Output)
+	go output.Plugin[f.Output].DoOutput()
 }
 
 func (f *Forwarder) StopParters() {
