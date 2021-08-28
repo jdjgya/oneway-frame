@@ -1,0 +1,162 @@
+package controller
+
+import (
+	"flag"
+
+	"github.com/jdjgya/service-frame/pkg/config"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/sync/plugin"
+	"github.com/jdjgya/service-frame/pkg/sync/worker"
+
+	"bytes"
+	"context"
+	"errors"
+	"io/ioutil"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
+	"go.uber.org/zap"
+)
+
+const (
+	module = "controller"
+)
+
+var (
+	instance *controller
+
+	once sync.Once
+	wg   sync.WaitGroup = sync.WaitGroup{}
+
+	configer = config.GetConfiger()
+	conf     string
+
+	logLevel int
+
+	osExit = os.Exit
+)
+
+type controller struct {
+	worker.Worker
+	isWorkerCompleted bool
+	isOneTimeExec     bool
+	wg                *sync.WaitGroup
+	ctx               context.Context
+	cancel            context.CancelFunc
+	signalChannel     chan os.Signal
+	log               *zap.Logger
+	logf              *zap.SugaredLogger
+}
+
+func init() {
+	flag.StringVar(&conf, "conf", "", "")
+	flag.IntVar(&logLevel, "log-level", 2, "")
+	flag.Parse()
+
+	log.SetLogLevel(logLevel)
+}
+
+func GetInstance() *controller {
+	once.Do(func() {
+		instance = &controller{
+			Worker: worker.InitWorker(),
+		}
+	})
+
+	return instance
+}
+
+func (c *controller) loadConfig(conf string) error {
+	if conf == "" {
+		return errors.New("conf file is required, please specify the path of conf file")
+	}
+
+	content, err := ioutil.ReadFile(conf)
+	if err != nil {
+		return err
+	}
+
+	configer.SetConfigType("yaml")
+	err = configer.ReadConfig(bytes.NewBuffer(content))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *controller) InitService() {
+	err := c.loadConfig(conf)
+	if err != nil {
+		c.logf.Errorf("failed to load conf from '%s'. error details: %s", conf, err.Error())
+		osExit(1)
+	}
+
+	c.log = log.GetLogger(module)
+	c.logf = c.log.Sugar()
+
+	c.wg = &wg
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.signalChannel = make(chan os.Signal, 1)
+	c.isWorkerCompleted = false
+
+	plugin.Metrics = &plugin.Metric{}
+}
+
+func (c *controller) ActivateService() {
+	c.Worker.SetParter(plugin.Interact)
+	c.Worker.SetCronner(plugin.CronJob)
+}
+
+func (c *controller) Start() {
+	c.log.Info("activating all workers")
+	c.Worker.StartParters()
+	c.Worker.StartCronners()
+	c.wg.Add(1)
+}
+
+func (c *controller) Stop() {
+	c.Worker.StopParters()
+	c.Worker.StopCronners()
+	c.wg.Done()
+	c.log.Info("all tasks have been stopped. stopping service.")
+}
+
+func (c *controller) Restart() {
+	c.log.Info("restarting all workers")
+	defer c.wg.Done()
+	c.wg.Add(1)
+	c.Stop()
+
+	c = GetInstance()
+	c.InitService()
+	c.ActivateService()
+	c.Start()
+	c.TrapSignals()
+}
+
+func (c *controller) TrapSignals() {
+	go func() {
+		signal.Notify(c.signalChannel, syscall.SIGHUP, syscall.SIGTERM)
+		c.log.Info("signal registered: SIGTEM, SIGUSR1")
+
+		for sig := range c.signalChannel {
+			switch sig {
+			case syscall.SIGHUP:
+				c.log.Info("SIGHUP recevied, restarting service...")
+				c.Restart()
+			case syscall.SIGTERM:
+				c.log.Info("SIGTERM recevied, stopping service ...")
+				c.Stop()
+			}
+			break
+		}
+	}()
+}
+
+func (c *controller) TraceStatus() {
+	c.wg.Wait()
+	c.log.Info("all controller and workers are done")
+}

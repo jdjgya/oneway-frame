@@ -1,0 +1,83 @@
+package cronjob
+
+import (
+	"context"
+	"sync"
+	"sync/atomic"
+	"unsafe"
+
+	"github.com/goinggo/mapstructure"
+	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/sync/plugin"
+	"github.com/jdjgya/service-frame/pkg/sync/plugin/cronjob"
+	"go.uber.org/zap"
+	"gopkg.in/go-playground/validator.v9"
+)
+
+const (
+	module = "dummy"
+)
+
+type DummyCronner struct {
+	wg     *sync.WaitGroup
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	schedule func()
+	config
+
+	log  *zap.Logger
+	logf *zap.SugaredLogger
+}
+
+type config struct {
+	Name     string `validate:"required"`
+	Schedule string `validate:"required"`
+}
+
+func init() {
+	cronjob.Plugin[module] = &DummyCronner{
+		wg: &sync.WaitGroup{},
+	}
+}
+
+func (d *DummyCronner) SetConfig(conf map[interface{}]interface{}) {
+	_ = mapstructure.Decode(conf, &d.config)
+
+	d.ctx, d.cancel = context.WithCancel(context.Background())
+	d.schedule = cronjob.WrapWithCron(d.ctx, d.wg, d.Schedule, d.coreFunc)
+
+	d.log = log.GetLogger(module)
+	d.logf = d.log.Sugar()
+}
+
+func (d *DummyCronner) CheckConfig() error {
+	validate := validator.New()
+	return validate.Struct(d.config)
+}
+
+func (d *DummyCronner) swapRecords(metrics **plugin.Metric) *plugin.Metric {
+	oldMetrics := &plugin.Metric{}
+	newMetrics := &plugin.Metric{}
+
+	*(*unsafe.Pointer)(unsafe.Pointer(&oldMetrics)) = atomic.SwapPointer(
+		(*unsafe.Pointer)(unsafe.Pointer(metrics)),
+		*(*unsafe.Pointer)(unsafe.Pointer(&newMetrics)),
+	)
+
+	return oldMetrics
+}
+
+func (d *DummyCronner) coreFunc() {
+	d.log.Info("dummy cronjob demo")
+}
+
+func (d *DummyCronner) DoSchedule() {
+	d.schedule()
+}
+
+func (d *DummyCronner) Stop() {
+	d.cancel()
+	d.wg.Wait()
+	d.ctx, d.cancel = context.WithCancel(context.Background())
+}

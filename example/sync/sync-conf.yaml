@@ -1,0 +1,20 @@
+interact:
+  name: "http"
+  address: "0.0.0.0"
+  port: 80
+  pattern:
+    name: "dummy"
+    method: "POST"
+    path: "/apis/dummy"
+    timeout: 10
+  transit:
+    name: "dummy"
+  process:
+    name: "dummy"
+  request:
+    name: "dummy"
+    retry: 3
+
+cronjobs:
+  - name: "dummy"
+    schedule: "0 */1 * * * *"
