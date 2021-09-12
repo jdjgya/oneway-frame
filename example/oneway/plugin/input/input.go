@@ -2,7 +2,6 @@ package input
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -38,8 +37,6 @@ func init() {
 	input.Plugin[module] = &DummyInputter{
 		wg: &sync.WaitGroup{},
 	}
-
-	fmt.Println("init finished, ", input.Plugin)
 }
 
 func (d *DummyInputter) SetConfig(conf interface{}) {

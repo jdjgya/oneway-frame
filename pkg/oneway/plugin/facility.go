@@ -9,6 +9,8 @@ const (
 )
 
 var (
+	Service string
+
 	ChanSize int32
 	I2TChan  = make(chan []byte)
 	T2PChan  = make(chan map[string]string)

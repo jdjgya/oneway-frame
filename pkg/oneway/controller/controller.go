@@ -8,12 +8,15 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/monitoring"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/jdjgya/service-frame/pkg/oneway/worker"
 	"go.uber.org/zap"
@@ -53,6 +56,8 @@ type controller struct {
 
 	log  *zap.Logger
 	logf *zap.SugaredLogger
+
+	monitoring.Monitor
 }
 
 func init() {
@@ -102,6 +107,8 @@ func (c *controller) initControllerParams() {
 }
 
 func (c *controller) initPluginParams() {
+	plugin.Service = strings.TrimSuffix(conf, filepath.Ext(conf))
+
 	plugin.IsOneTimeExec = c.isOneTimeExec
 	plugin.ChanSize = configer.GetInt32(chanSize)
 
@@ -182,6 +189,11 @@ func (c *controller) TrapSignals() {
 	}()
 }
 
+func (c *controller) MonitorService() {
+	c.Monitor.SetRunMode(c.isOneTimeExec)
+	c.Monitor.TraceMetric()
+}
+
 func (c *controller) TraceStatus() {
 	go func() {
 		if !c.isOneTimeExec {
@@ -198,6 +210,8 @@ func (c *controller) TraceStatus() {
 			time.Sleep(3 * time.Second)
 		}
 	}()
+
+	c.MonitorService()
 
 	c.wg.Wait()
 	c.log.Info("worker is done, ready to exit process")
