@@ -2,9 +2,12 @@ package controller
 
 import (
 	"flag"
+	"path/filepath"
+	"strings"
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/sync/monitoring"
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
 	"github.com/jdjgya/service-frame/pkg/sync/worker"
 
@@ -40,14 +43,18 @@ var (
 
 type controller struct {
 	worker.Worker
-	isWorkerCompleted bool
-	isOneTimeExec     bool
-	wg                *sync.WaitGroup
-	ctx               context.Context
-	cancel            context.CancelFunc
-	signalChannel     chan os.Signal
-	log               *zap.Logger
-	logf              *zap.SugaredLogger
+
+	wg     *sync.WaitGroup
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	isOneTimeExec bool
+	signalChannel chan os.Signal
+
+	log  *zap.Logger
+	logf *zap.SugaredLogger
+
+	monitoring.Monitor
 }
 
 func init() {
@@ -87,22 +94,29 @@ func (c *controller) loadConfig(conf string) error {
 	return nil
 }
 
+func (c *controller) initControllerParams() {
+	c.wg = &wg
+	c.ctx, c.cancel = context.WithCancel(context.Background())
+	c.signalChannel = make(chan os.Signal, 1)
+}
+
+func (c *controller) initPluginParams() {
+	plugin.Service = strings.TrimSuffix(conf, filepath.Ext(conf))
+	plugin.Metrics = &plugin.Metric{}
+}
+
 func (c *controller) InitService() {
+	c.log = log.GetLogger(module)
+	c.logf = c.log.Sugar()
+
 	err := c.loadConfig(conf)
 	if err != nil {
 		c.logf.Errorf("failed to load conf from '%s'. error details: %s", conf, err.Error())
 		osExit(1)
 	}
 
-	c.log = log.GetLogger(module)
-	c.logf = c.log.Sugar()
-
-	c.wg = &wg
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-	c.signalChannel = make(chan os.Signal, 1)
-	c.isWorkerCompleted = false
-
-	plugin.Metrics = &plugin.Metric{}
+	c.initControllerParams()
+	c.initPluginParams()
 }
 
 func (c *controller) ActivateService() {
@@ -156,7 +170,14 @@ func (c *controller) TrapSignals() {
 	}()
 }
 
+func (c *controller) MonitorService() {
+	c.Monitor.SetMetricReporter()
+	c.Monitor.TraceMetric()
+}
+
 func (c *controller) TraceStatus() {
+	c.MonitorService()
+
 	c.wg.Wait()
 	c.log.Info("all controller and workers are done")
 }

@@ -10,10 +10,10 @@ type Monitor struct {
 
 func getReporter(isOneTimeExec bool) MetricsReporter {
 	if isOneTimeExec {
-		return GetActiveReporter()
+		return GetMetricPusher()
 	}
 
-	return GetPassiveReporter()
+	return GetMetricPuller()
 }
 
 func (m *Monitor) SetRunMode(isOneTimeExec bool) {
@@ -21,5 +21,6 @@ func (m *Monitor) SetRunMode(isOneTimeExec bool) {
 }
 
 func (m *Monitor) TraceMetric() {
+	go collectMetric()
 	go m.MetricsReporter.DoReport()
 }

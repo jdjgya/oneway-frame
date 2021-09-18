@@ -41,7 +41,6 @@ func WrapWithOutputLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(m
 					plugin.OutputStatus.Completed = true
 					return
 				}
-			default:
 			}
 		}
 	}

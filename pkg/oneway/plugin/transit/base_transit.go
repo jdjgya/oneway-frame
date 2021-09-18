@@ -45,7 +45,6 @@ func WrapWithTransitLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(
 					plugin.TransitStatus.Completed = true
 					return
 				}
-			default:
 			}
 		}
 	}

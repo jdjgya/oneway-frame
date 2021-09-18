@@ -42,7 +42,6 @@ func WrapWithProcessLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(
 					plugin.ProcessStatus.Completed = true
 					return
 				}
-			default:
 			}
 		}
 	}

@@ -16,4 +16,4 @@ cronjobs:
     schedule: "0 */1 * * * *"
 
 channelSize: 1000
-oneTimeExec: True
+oneTimeExec: False

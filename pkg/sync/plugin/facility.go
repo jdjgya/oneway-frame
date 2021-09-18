@@ -9,6 +9,7 @@ const (
 )
 
 var (
+	Service          string
 	Metrics          = &Metric{}
 	ActivatedTransit string
 	ActivatedProcess string

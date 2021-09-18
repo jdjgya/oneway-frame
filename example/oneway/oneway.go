@@ -1,6 +1,9 @@
 package main
 
 import (
+	"net/http"
+	_ "net/http/pprof"
+
 	_ "github.com/jdjgya/service-frame/example/oneway/plugin/cronjob"
 	_ "github.com/jdjgya/service-frame/example/oneway/plugin/input"
 	_ "github.com/jdjgya/service-frame/example/oneway/plugin/output"
@@ -11,6 +14,8 @@ import (
 )
 
 func main() {
+	go http.ListenAndServe("localhost:6060", nil)
+
 	c := controller.GetInstance()
 	c.InitService()
 	c.ActivateService()

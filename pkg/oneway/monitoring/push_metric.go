@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/push"
 )
 
-type ActiveReporter struct {
+type MetricPusher struct {
 	Pusher
 }
 
@@ -17,20 +17,18 @@ type Pusher interface {
 	Gatherer(prometheus.Gatherer) *push.Pusher
 }
 
-func GetActiveReporter() MetricsReporter {
+func GetMetricPusher() MetricsReporter {
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(inputOK)
 
-	return &ActiveReporter{
+	return &MetricPusher{
 		Pusher: push.New("http://127.0.0.1:9091", plugin.Service).Gatherer(registry),
 	}
 }
 
-func (a *ActiveReporter) DoReport() {
+func (m *MetricPusher) DoReport() {
 	for {
-		inputOK.Set(float64(plugin.Metrics.InputOK))
-
-		a.Pusher.Add()
+		m.Pusher.Add()
 		time.Sleep(60 * time.Second)
 	}
 }

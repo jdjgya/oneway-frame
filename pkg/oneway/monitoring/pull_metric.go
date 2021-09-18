@@ -7,20 +7,20 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type PassiveReporter struct {
+type MetricPuller struct {
 	listener plug.Listener
 }
 
-func GetPassiveReporter() MetricsReporter {
+func GetMetricPuller() MetricsReporter {
 	http.Handle("/metrics", promhttp.Handler())
 
-	return &PassiveReporter{
+	return &MetricPuller{
 		listener: &http.Server{
 			Addr: "0.0.0.0:2112",
 		},
 	}
 }
 
-func (p *PassiveReporter) DoReport() {
-	go p.listener.ListenAndServe()
+func (m *MetricPuller) DoReport() {
+	go m.listener.ListenAndServe()
 }
