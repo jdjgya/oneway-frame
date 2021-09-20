@@ -19,6 +19,8 @@ import (
 	"github.com/jdjgya/service-frame/pkg/oneway/monitoring"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/jdjgya/service-frame/pkg/oneway/worker"
+
+	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 )
 

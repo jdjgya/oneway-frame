@@ -1,9 +1,17 @@
 package controller
 
 import (
+	"bytes"
+	"context"
+	"errors"
 	"flag"
+	"io/ioutil"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
+	"syscall"
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
@@ -11,15 +19,7 @@ import (
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
 	"github.com/jdjgya/service-frame/pkg/sync/worker"
 
-	"bytes"
-	"context"
-	"errors"
-	"io/ioutil"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-
+	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 )
 
