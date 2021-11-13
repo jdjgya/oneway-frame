@@ -1,6 +1,6 @@
 .PHONY: check-lint
 check-lint:
-	@echo 'check-lint TBD'
+	@golangci-lint run
 
 .PHONY: unit-test
 unit-test:

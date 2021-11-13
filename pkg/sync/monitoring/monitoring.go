@@ -8,10 +8,6 @@ type Monitor struct {
 	MetricsReporter
 }
 
-func getReporter() MetricsReporter {
-	return GetMetricPuller()
-}
-
 func (m *Monitor) SetMetricReporter() {
 	m.MetricsReporter = GetMetricPuller()
 }

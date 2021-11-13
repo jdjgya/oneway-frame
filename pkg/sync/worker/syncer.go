@@ -14,7 +14,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 
 	"go.uber.org/zap"
 )
@@ -25,7 +24,6 @@ const (
 )
 
 var (
-	once     sync.Once
 	configer = config.GetConfiger()
 	osExit   = os.Exit
 )

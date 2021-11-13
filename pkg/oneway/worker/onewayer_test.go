@@ -21,14 +21,13 @@ import (
 )
 
 const (
-	dummy                 = "dummy"
-	doInput               = "doInput"
-	doTransit             = "doTransit"
-	doProcess             = "doProcess"
-	doOutput              = "doOutput"
-	doCron                = "doCron"
-	nonExistentPluginType = "nonExistentPluginType"
-	onStop                = "onStop"
+	dummy     = "dummy"
+	doInput   = "doInput"
+	doTransit = "doTransit"
+	doProcess = "doProcess"
+	doOutput  = "doOutput"
+	doCron    = "doCron"
+	onStop    = "onStop"
 )
 
 // worker for testing
@@ -36,8 +35,6 @@ var tester Worker
 
 // configer for testing
 type testConfiger struct{}
-
-var testConfer *testConfiger
 
 func (tcfgr *testConfiger) SetConfigType(string) {}
 

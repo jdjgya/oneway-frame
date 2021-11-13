@@ -4,7 +4,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
@@ -24,7 +23,6 @@ const (
 )
 
 var (
-	once     sync.Once
 	configer = config.GetConfiger()
 	osExit   = os.Exit
 )

@@ -48,13 +48,6 @@ type Record struct {
 	Output  [][]byte
 }
 
-type status struct {
-	IsInputCompleted   bool
-	IsTransitCompleted bool
-	IsProcessCompleted bool
-	IsOutputCompleted  bool
-}
-
 type inputStatus struct {
 	Completed bool
 }

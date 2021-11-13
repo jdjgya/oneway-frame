@@ -2,6 +2,7 @@ package cronjob
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -69,7 +70,11 @@ func (d *DummyCronner) swapRecords(metrics **plugin.Metric) *plugin.Metric {
 }
 
 func (d *DummyCronner) coreFunc() {
-	d.log.Info("dummy cronjob demo")
+	metrics := d.swapRecords(&plugin.Metrics)
+	jsonMetrics, _ := json.Marshal(metrics)
+	raw := json.RawMessage(jsonMetrics)
+
+	d.log.Info("dummy periodical metrics dump", zap.Any("metrics", &raw))
 }
 
 func (d *DummyCronner) DoSchedule() {

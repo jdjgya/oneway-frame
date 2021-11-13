@@ -1,7 +1,6 @@
 package process
 
 import (
-	"strings"
 	"sync/atomic"
 
 	"github.com/goinggo/mapstructure"
@@ -17,8 +16,7 @@ const (
 )
 
 type DummyProcessor struct {
-	strBuilder strings.Builder
-	validator  *validator.Validate
+	validator *validator.Validate
 
 	config
 

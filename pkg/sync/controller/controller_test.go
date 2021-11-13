@@ -15,7 +15,6 @@ import (
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
 
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 const (
@@ -34,8 +33,7 @@ const (
 )
 
 var (
-	isTestWorkerCompleted bool
-	_                     = func() bool {
+	_ = func() bool {
 		testing.Init()
 		return true
 	}()
@@ -47,7 +45,6 @@ type testWorker struct {
 	Process          string
 	Request          string
 	CronJobs         []string
-	log              *zap.Logger
 	testWokrerStatus string
 	testCronJbStatus string
 }
@@ -82,8 +79,6 @@ func (t *testWorker) StartCronners() { t.testCronJbStatus = start }
 func (t *testWorker) StopCronners() { t.testCronJbStatus = stop }
 
 type testConfiger struct{}
-
-var testConfer *testConfiger
 
 func (tcfgr *testConfiger) SetConfigType(string) {}
 

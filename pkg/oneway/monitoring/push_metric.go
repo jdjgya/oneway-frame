@@ -3,9 +3,18 @@ package monitoring
 import (
 	"time"
 
+	"github.com/jdjgya/service-frame/pkg/log"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+)
+
+const (
+	module = "metricsPusher"
+)
+
+var (
+	pushLogger = log.GetLogger(module)
 )
 
 type MetricPusher struct {
@@ -28,7 +37,11 @@ func GetMetricPusher() MetricsReporter {
 
 func (m *MetricPusher) DoReport() {
 	for {
-		m.Pusher.Add()
+		err := m.Pusher.Add()
+		if err != nil {
+			pushLogger.Error("failed to add metric")
+		}
+
 		time.Sleep(60 * time.Second)
 	}
 }

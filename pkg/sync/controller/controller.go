@@ -48,7 +48,6 @@ type controller struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	isOneTimeExec bool
 	signalChannel chan os.Signal
 
 	log  *zap.Logger
@@ -165,7 +164,6 @@ func (c *controller) TrapSignals() {
 				c.log.Info("SIGTERM recevied, stopping service ...")
 				c.Stop()
 			}
-			break
 		}
 	}()
 }

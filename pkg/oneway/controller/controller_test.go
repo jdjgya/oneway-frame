@@ -13,7 +13,6 @@ import (
 	"github.com/jdjgya/service-frame/pkg/log"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 const (
@@ -48,8 +47,6 @@ type testWorker struct {
 
 	testWokrerStatus string
 	testCronJbStatus string
-
-	log *zap.Logger
 }
 
 var tester *testWorker
@@ -84,8 +81,6 @@ func (t *testWorker) GetStatus() bool {
 }
 
 type testConfiger struct{}
-
-var testConfer *testConfiger
 
 func (tcfgr *testConfiger) SetConfigType(string) {}
 

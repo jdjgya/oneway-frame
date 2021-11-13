@@ -75,7 +75,8 @@ func TestWrapWithOutputLoopCloseSuccess(t *testing.T) {
 	plugin.P2OChan = make(chan map[string]string, 5)
 
 	wg := &sync.WaitGroup{}
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, canel := context.WithCancel(context.Background())
+	defer canel()
 
 	expectedStatus = success
 	plugin.P2OChan <- map[string]string{}

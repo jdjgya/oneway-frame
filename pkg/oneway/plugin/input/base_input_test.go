@@ -76,7 +76,8 @@ func TestWrapWithInputLoopCloseSuccess(t *testing.T) {
 	plugin.I2TChan = make(chan []byte, 5)
 
 	wg := &sync.WaitGroup{}
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, canel := context.WithCancel(context.Background())
+	defer canel()
 
 	plugin.IsOneTimeExec = true
 

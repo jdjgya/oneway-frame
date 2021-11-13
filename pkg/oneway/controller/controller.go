@@ -186,7 +186,6 @@ func (c *controller) TrapSignals() {
 				c.log.Info("Signal SIGTERM recevied, stopping service ...")
 				c.Stop()
 			}
-			break
 		}
 	}()
 }
