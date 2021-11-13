@@ -15,7 +15,8 @@ import (
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
-	"github.com/jdjgya/service-frame/pkg/sync/monitoring"
+	"github.com/jdjgya/service-frame/pkg/monitoring"
+	"github.com/jdjgya/service-frame/pkg/oneway/metric"
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
 	"github.com/jdjgya/service-frame/pkg/sync/worker"
 
@@ -24,7 +25,8 @@ import (
 )
 
 const (
-	module = "controller"
+	module        = "controller"
+	isOneTimeExec = false
 )
 
 var (
@@ -169,7 +171,9 @@ func (c *controller) TrapSignals() {
 }
 
 func (c *controller) MonitorService() {
-	c.Monitor.SetMetricReporter()
+	metric.CollectMetric()
+
+	c.Monitor.SetReportTunnel(isOneTimeExec)
 	c.Monitor.TraceMetric()
 }
 

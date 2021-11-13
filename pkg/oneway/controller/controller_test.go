@@ -11,7 +11,9 @@ import (
 
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
+	"github.com/jdjgya/service-frame/pkg/monitoring"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -233,7 +235,6 @@ func TestTraceStatusIsOneTimeExec(t *testing.T) {
 	}()
 
 	instance.TraceStatus()
-
 	assert.Equal(t, true, instance.isWorkerCompleted, "failed to sync worker status to true")
 }
 
@@ -249,6 +250,7 @@ func TestTraceStatusIsNotOneTimeExec(t *testing.T) {
 		instance.wg.Done()
 	}()
 
+	monitoring.MetricRegistry = prometheus.NewRegistry()
 	instance.TraceStatus()
 	assert.Equal(t, false, instance.isWorkerCompleted, "failed to sync worker status to false")
 }

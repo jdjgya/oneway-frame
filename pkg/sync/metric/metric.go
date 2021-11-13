@@ -1,4 +1,4 @@
-package monitoring
+package metric
 
 import (
 	"time"
@@ -6,6 +6,10 @@ import (
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+const (
+	oneMinute = 60 * time.Second
 )
 
 var (
@@ -66,20 +70,22 @@ var (
 	)
 )
 
-func collectMetric() {
-	for {
-		interactOK.Set(float64(plugin.Metrics.InteractOK))
-		interactErr.Set(float64(plugin.Metrics.InteractErr))
+func CollectMetric() {
+	go func() {
+		for {
+			interactOK.Set(float64(plugin.Metrics.InteractOK))
+			interactErr.Set(float64(plugin.Metrics.InteractErr))
 
-		transitOK.Set(float64(plugin.Metrics.TransitOK))
-		transitErr.Set(float64(plugin.Metrics.TransitErr))
+			transitOK.Set(float64(plugin.Metrics.TransitOK))
+			transitErr.Set(float64(plugin.Metrics.TransitErr))
 
-		processOK.Set(float64(plugin.Metrics.ProcessOK))
-		processErr.Set(float64(plugin.Metrics.ProcessErr))
+			processOK.Set(float64(plugin.Metrics.ProcessOK))
+			processErr.Set(float64(plugin.Metrics.ProcessErr))
 
-		requestOK.Set(float64(plugin.Metrics.RequestOK))
-		requestErr.Set(float64(plugin.Metrics.RequestErr))
+			requestOK.Set(float64(plugin.Metrics.RequestOK))
+			requestErr.Set(float64(plugin.Metrics.RequestErr))
 
-		time.Sleep(60 * time.Second)
-	}
+			time.Sleep(oneMinute)
+		}
+	}()
 }

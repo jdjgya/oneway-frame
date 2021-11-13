@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -61,13 +62,19 @@ func (h *Http) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &h.config)
 	h.ctx, h.cancel = context.WithCancel(context.Background())
 
+	h.log = log.GetLogger(module)
+	h.logf = h.log.Sugar()
+
 	gin.DefaultWriter = ioutil.Discard
 	h.router = gin.New()
 	h.router.Use(gin.Recovery())
 
 	patternName := h.config.Pattern.Name
 	patternMethod := h.config.Pattern.Method
-	pattern.Plugins[patternName].RegisterRouter(h.router, patternMethod, h.Path)
+	err := pattern.Plugins[patternName].RegisterRouter(h.router, patternMethod, h.Path)
+	if err != nil {
+		h.logf.Errorf("faild to register router. error details: %s", err.Error())
+	}
 	pattern.Plugins[h.config.Pattern.Name].SetRouterStage(plugin.ActivatedTransit, plugin.ActivatedProcess, plugin.ActivatedRequest)
 
 	socket := strings.Join([]string{h.Address, strconv.Itoa(h.Port)}, ":")
@@ -76,8 +83,6 @@ func (h *Http) SetConfig(conf interface{}) {
 		Handler: h.router,
 	}
 
-	h.log = log.GetLogger(module)
-	h.logf = h.log.Sugar()
 }
 
 func (h *Http) CheckConfig() error {
@@ -86,7 +91,11 @@ func (h *Http) CheckConfig() error {
 }
 
 func (h *Http) DoInteract() {
-	h.listener.ListenAndServe()
+	err := h.listener.ListenAndServe()
+	if err != nil {
+		h.logf.Errorf("failed to listen on particular protocol. error: %s", err.Error())
+		os.Exit(1)
+	}
 }
 
 func (h *Http) Stop() {
