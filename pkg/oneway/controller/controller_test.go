@@ -23,15 +23,21 @@ const (
 	output  = "testOutput"
 	cronJob = "cronJob"
 
-	successConf            = ""
+	successConf            = "../../../example/oneway/oneway-conf.yaml"
 	failureNotFoundConf    = "can_not_find_this_file.yaml"
-	failureReadConfContent = ""
+	failureReadConfContent = "../../../example/oneway/oneway-conf.yaml"
 
 	start = "start"
 	stop  = "stop"
 )
 
-var isTestWorkerCompleted bool
+var (
+	isTestWorkerCompleted bool
+	_                     = func() bool {
+		testing.Init()
+		return true
+	}()
+)
 
 type testWorker struct {
 	Input    string
@@ -97,26 +103,26 @@ func TestController(t *testing.T) {
 }
 
 func TestInitService(t *testing.T) {
-	instance.InitService(successConf)
-
-	assert.NotEmpty(t, instance.log, "failed to init logger")
-	assert.NotEqual(t, nil, instance.ctx, "failed to init ctx")
-	assert.NotEqual(t, nil, instance.wg, "failed to init wg")
-	assert.NotEqual(t, nil, plugin.Metrics, "failed to init plugin metrics")
-	assert.NotEqual(t, nil, plugin.Records, "failed to init plugin records")
+	var testReturnCode int
+	osExit = func(code int) {
+		testReturnCode = code
+	}
 
 	defer func() {
 		osExit = os.Exit
 		conf = successConf
 	}()
 
-	var testReturnCode int
-	osExit = func(code int) {
-		testReturnCode = code
-	}
+	conf = successConf
+	instance.InitService()
+	assert.NotEmpty(t, instance.log, "failed to init logger")
+	assert.NotEqual(t, nil, instance.ctx, "failed to init ctx")
+	assert.NotEqual(t, nil, instance.wg, "failed to init wg")
+	assert.NotEqual(t, nil, plugin.Metrics, "failed to init plugin metrics")
+	assert.NotEqual(t, nil, plugin.Records, "failed to init plugin records")
 
-	instance.InitService("")
-
+	conf = ""
+	instance.InitService()
 	assert.Equal(t, 1, testReturnCode, "failed to get error return code")
 }
 
@@ -140,7 +146,6 @@ func TestActivateService(t *testing.T) {
 	instance.Worker = tester
 
 	instance.ActivateService()
-
 	assert.Equal(t, input, tester.Input, "failed to set input plugin")
 	assert.Equal(t, transit, tester.Transit, "failed to set transit plugin")
 	assert.Equal(t, process, tester.Process, "failed to set process plugin")
@@ -153,7 +158,6 @@ func TestStartService(t *testing.T) {
 	instance.Worker = tester
 
 	instance.Start()
-
 	assert.Equal(t, start, tester.testWokrerStatus, "failed to start worker")
 	assert.Equal(t, start, tester.testCronJbStatus, "failed to start cronjob")
 	instance.wg.Done()
@@ -172,7 +176,6 @@ func TestRestartService(t *testing.T) {
 	tester.testCronJbStatus = stop
 
 	instance.Restart()
-
 	assert.Equal(t, start, tester.testWokrerStatus, "failed to restart worker")
 	assert.Equal(t, start, tester.testCronJbStatus, "failed to restart cronjob")
 }
@@ -185,7 +188,6 @@ func TestStopService(t *testing.T) {
 	instance.wg.Add(1)
 
 	instance.Stop()
-
 	assert.Equal(t, stop, tester.testWokrerStatus, "failed to stop worker")
 	assert.Equal(t, stop, tester.testCronJbStatus, "failed to stop cronjob")
 }
@@ -253,6 +255,5 @@ func TestTraceStatusIsNotOneTimeExec(t *testing.T) {
 	}()
 
 	instance.TraceStatus()
-
 	assert.Equal(t, false, instance.isWorkerCompleted, "failed to sync worker status to false")
 }

@@ -19,19 +19,27 @@ import (
 )
 
 const (
-	interact               = "testInteract"
-	transit                = "testTransit"
-	process                = "testProcess"
-	request                = "testOutput"
-	cronJob                = "cronJob"
-	successConf            = ""
+	interact = "testInteract"
+	transit  = "testTransit"
+	process  = "testProcess"
+	request  = "testOutput"
+	cronJob  = "cronJob"
+
+	successConf            = "../../../example/sync/sync-conf.yaml"
 	failureNotFoundConf    = "can_not_find_this_file.yaml"
-	failureReadConfContent = ""
-	start                  = "start"
-	stop                   = "stop"
+	failureReadConfContent = "../../../example/sync/sync-conf.yaml"
+
+	start = "start"
+	stop  = "stop"
 )
 
-var isTestWorkerCompleted bool
+var (
+	isTestWorkerCompleted bool
+	_                     = func() bool {
+		testing.Init()
+		return true
+	}()
+)
 
 type testWorker struct {
 	Interact         string
@@ -73,7 +81,6 @@ func (t *testWorker) StartCronners() { t.testCronJbStatus = start }
 
 func (t *testWorker) StopCronners() { t.testCronJbStatus = stop }
 
-// configer for testing
 type testConfiger struct{}
 
 var testConfer *testConfiger
@@ -94,25 +101,25 @@ func TestController(t *testing.T) {
 }
 
 func TestInitService(t *testing.T) {
-	instance.InitService(successConf)
-
-	assert.NotEmpty(t, instance.log, "failed to init logger")
-	assert.NotEqual(t, nil, instance.ctx, "failed to init ctx")
-	assert.NotEqual(t, nil, instance.wg, "failed to init wg")
-	assert.NotEqual(t, nil, plugin.Metrics, "failed to init plugin metrics")
+	var testReturnCode int
+	osExit = func(code int) {
+		testReturnCode = code
+	}
 
 	defer func() {
 		osExit = os.Exit
 		conf = successConf
 	}()
 
-	var testReturnCode int
-	osExit = func(code int) {
-		testReturnCode = code
-	}
+	conf = successConf
+	instance.InitService()
+	assert.NotEmpty(t, instance.log, "failed to init logger")
+	assert.NotEqual(t, nil, instance.ctx, "failed to init ctx")
+	assert.NotEqual(t, nil, instance.wg, "failed to init wg")
+	assert.NotEqual(t, nil, plugin.Metrics, "failed to init plugin metrics")
 
-	instance.InitService("")
-
+	conf = ""
+	instance.InitService()
 	assert.Equal(t, 1, testReturnCode, "failed to get error return code")
 }
 
@@ -136,7 +143,6 @@ func TestActivateService(t *testing.T) {
 	instance.Worker = tester
 
 	instance.ActivateService()
-
 	assert.Equal(t, interact, tester.Interact, "failed to set interact plugin")
 }
 
@@ -145,7 +151,6 @@ func TestStartService(t *testing.T) {
 	instance.Worker = tester
 
 	instance.Start()
-
 	assert.Equal(t, start, tester.testWokrerStatus, "failed to start worker")
 	assert.Equal(t, start, tester.testCronJbStatus, "failed to start cronjob")
 	instance.wg.Done()
@@ -164,7 +169,6 @@ func TestRestartService(t *testing.T) {
 	tester.testCronJbStatus = stop
 
 	instance.Restart()
-
 	assert.Equal(t, start, tester.testWokrerStatus, "failed to restart worker")
 	assert.Equal(t, start, tester.testCronJbStatus, "failed to restart cronjob")
 }
@@ -177,7 +181,6 @@ func TestStopService(t *testing.T) {
 	instance.wg.Add(1)
 
 	instance.Stop()
-
 	assert.Equal(t, stop, tester.testWokrerStatus, "failed to stop worker")
 	assert.Equal(t, stop, tester.testCronJbStatus, "failed to stop cronjob")
 }
