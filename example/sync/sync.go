@@ -4,6 +4,7 @@ import (
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/cronjob"
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/http"
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/http/pattern/dummy"
+	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/http/pattern/dummy2"
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/stage/process"
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/stage/request"
 	_ "github.com/jdjgya/service-frame/example/sync/plugin/interact/stage/transit"

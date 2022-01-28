@@ -14,5 +14,5 @@ type Stager interface {
 }
 
 type StageUser interface {
-	SetStager(string, interface{})
+	SetStager(string, int, interface{})
 }

@@ -28,6 +28,11 @@ var (
 	osExit   = os.Exit
 )
 
+type (
+	rootConfType = map[string]interface{}
+	leafConfType = map[interface{}]interface{}
+)
+
 type Syncer struct {
 	Interact     string
 	StageTransit string
@@ -57,41 +62,41 @@ func (r *Syncer) setStagerConfig(stager string, stageConfig interface{}) {
 	}
 }
 
-func (r *Syncer) getStagerConfig(stageType string, rawConf interface{}) (string, interface{}) {
+func (r *Syncer) getStagerConfig(stageType string, stageIndex int, rawConf interface{}) (string, interface{}) {
 	var stager string
-	stageConfig := (rawConf.(map[string]interface{}))[stageType]
+	stageConfig := rawConf.(leafConfType)[stageType]
 
 	switch stageType {
 	case plugin.StageTransit:
-		stageName := (stageConfig.(map[string]interface{}))[name].(string)
+		stageName := stageConfig.(leafConfType)[name].(string)
 		stager = strings.Join([]string{stageType, stageName}, "-")
 
 		r.StageTransit = stageName
-		plugin.ActivatedTransit = stageName
+		plugin.ActivatedTransit[stageIndex] = stageName
 		plug.Stagers[stager] = transit.Plugins[r.StageTransit]
 
 	case plugin.StageProcess:
-		stageName := (stageConfig.(map[string]interface{}))[name].(string)
+		stageName := stageConfig.(leafConfType)[name].(string)
 		stager = strings.Join([]string{stageType, stageName}, "-")
 
 		r.StageProcess = stageName
-		plugin.ActivatedProcess = stageName
+		plugin.ActivatedProcess[stageIndex] = stageName
 		plug.Stagers[stager] = process.Plugins[r.StageProcess]
 
 	case plugin.StageRequest:
-		stageName := (stageConfig.(map[string]interface{}))[name].(string)
+		stageName := stageConfig.(leafConfType)[name].(string)
 		stager = strings.Join([]string{stageType, stageName}, "-")
 
 		r.StageRequest = stageName
-		plugin.ActivatedRequest = stageName
+		plugin.ActivatedRequest[stageIndex] = stageName
 		plug.Stagers[stager] = request.Plugins[r.StageRequest]
 	}
 
 	return stager, stageConfig
 }
 
-func (r *Syncer) SetStager(stageType string, stageConfig interface{}) {
-	stager, stageConfig := r.getStagerConfig(stageType, stageConfig)
+func (r *Syncer) SetStager(stageType string, stageIndex int, stageConfig interface{}) {
+	stager, stageConfig := r.getStagerConfig(stageType, stageIndex, stageConfig)
 	r.setStagerConfig(stager, stageConfig)
 }
 
@@ -104,9 +109,14 @@ func (r *Syncer) setParterConfig(parter string, pluginConf interface{}) {
 	}
 }
 
+func (r *Syncer) getPatternConfs(pluginConf interface{}) []interface{} {
+	patterns := pluginConf.(rootConfType)["patterns"]
+	return patterns.([]interface{})
+}
+
 func (r *Syncer) getParterConfig(pluginType string) (string, interface{}) {
 	rawConf := configer.Get(pluginType)
-	pluginName := (rawConf.(map[string]interface{}))[name].(string)
+	pluginName := rawConf.(rootConfType)[name].(string)
 	r.Interact = pluginName
 
 	parter := strings.Join([]string{pluginType, pluginName}, "-")
@@ -117,9 +127,18 @@ func (r *Syncer) getParterConfig(pluginType string) (string, interface{}) {
 
 func (r *Syncer) SetParter(pluginType string) {
 	parter, pluginConf := r.getParterConfig(pluginType)
-	r.SetStager(plugin.StageTransit, pluginConf)
-	r.SetStager(plugin.StageProcess, pluginConf)
-	r.SetStager(plugin.StageRequest, pluginConf)
+	patternConfs := r.getPatternConfs(pluginConf)
+
+	plugin.ActivatedTransit = make([]string, len(patternConfs))
+	plugin.ActivatedProcess = make([]string, len(patternConfs))
+	plugin.ActivatedRequest = make([]string, len(patternConfs))
+
+	for patternIndex, patternConf := range patternConfs {
+		r.SetStager(plugin.StageTransit, patternIndex, patternConf)
+		r.SetStager(plugin.StageProcess, patternIndex, patternConf)
+		r.SetStager(plugin.StageRequest, patternIndex, patternConf)
+	}
+
 	r.setParterConfig(parter, pluginConf)
 }
 
@@ -133,16 +152,16 @@ func (r *Syncer) StopParters() {
 	r.logf.Infof("stop input plugin(%s)", r.Interact)
 }
 
-func (r *Syncer) getCronnerConfig(pluginType string) map[string]map[interface{}]interface{} {
-	cronConfigs := make(map[string]map[interface{}]interface{})
+func (r *Syncer) getCronnerConfig(pluginType string) map[string]leafConfType {
+	cronConfigs := make(map[string]leafConfType)
 	rawConfig := reflect.ValueOf(configer.Get(pluginType))
 
 	for i := 0; i < rawConfig.Len(); i++ {
-		pluginConfig := rawConfig.Index(i).Interface().(map[interface{}]interface{})
+		pluginConfig := rawConfig.Index(i).Interface().(leafConfType)
 		pluginName := pluginConfig[name].(string)
 		cronName := strings.Join([]string{pluginType, pluginName}, "-")
 
-		cronConfigs[pluginName] = make(map[interface{}]interface{})
+		cronConfigs[pluginName] = make(leafConfType)
 		cronConfigs[pluginName] = pluginConfig
 		plug.Cronners[cronName] = cronjob.Plugin[pluginName]
 	}
@@ -150,7 +169,7 @@ func (r *Syncer) getCronnerConfig(pluginType string) map[string]map[interface{}]
 	return cronConfigs
 }
 
-func (r *Syncer) setCronnerConfig(pluginType string, cronConfigs map[string]map[interface{}]interface{}) {
+func (r *Syncer) setCronnerConfig(pluginType string, cronConfigs map[string]leafConfType) {
 	for cronName, cronConfig := range cronConfigs {
 		cronner := strings.Join([]string{pluginType, cronName}, "-")
 		plug.Cronners[cronner].SetConfig(cronConfig)

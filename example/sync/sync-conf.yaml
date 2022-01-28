@@ -2,18 +2,29 @@ interact:
   name: "http"
   address: "0.0.0.0"
   port: 80
-  pattern:
-    name: "dummy"
+  patterns:
+  - name: "dummy"
     method: "POST"
-    path: "/apis/dummy"
+    path: "/apis/dummy1"
     timeout: 10
-  transit:
-    name: "dummy"
-  process:
-    name: "dummy"
-  request:
-    name: "dummy"
-    retry: 3
+    transit:
+      name: "dummy"
+    process:
+      name: "dummy"
+    request:
+      name: "dummy"
+      retry: 3
+  - name: "dummy2"
+    method: "POST"
+    path: "/apis/dummy2"
+    timeout: 10
+    transit:
+      name: "dummy"
+    process:
+      name: "dummy"
+    request:
+      name: "dummy"
+      retry: 3
 
 cronjobs:
   - name: "dummy"

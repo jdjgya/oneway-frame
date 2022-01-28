@@ -40,10 +40,10 @@ type Http struct {
 }
 
 type config struct {
-	Name    string `validate:"required"`
-	Address string `validate:"required"`
-	Port    int    `validate:"required"`
-	Pattern
+	Name     string `validate:"required"`
+	Address  string `validate:"required"`
+	Port     int    `validate:"required"`
+	Patterns []Pattern
 }
 
 type Pattern struct {
@@ -69,20 +69,24 @@ func (h *Http) SetConfig(conf interface{}) {
 	h.router = gin.New()
 	h.router.Use(gin.Recovery())
 
-	patternName := h.config.Pattern.Name
-	patternMethod := h.config.Pattern.Method
-	err := pattern.Plugins[patternName].RegisterRouter(h.router, patternMethod, h.Path)
-	if err != nil {
-		h.logf.Errorf("faild to register router. error details: %s", err.Error())
+	for i, p := range h.Patterns {
+		err := pattern.Plugins[p.Name].RegisterRouter(h.router, p.Method, p.Path)
+		if err != nil {
+			h.logf.Errorf("faild to register router. error details: %s", err.Error())
+		}
+
+		pattern.Plugins[p.Name].SetRouterStage(
+			plugin.ActivatedTransit[i],
+			plugin.ActivatedProcess[i],
+			plugin.ActivatedRequest[i],
+		)
 	}
-	pattern.Plugins[h.config.Pattern.Name].SetRouterStage(plugin.ActivatedTransit, plugin.ActivatedProcess, plugin.ActivatedRequest)
 
 	socket := strings.Join([]string{h.Address, strconv.Itoa(h.Port)}, ":")
 	h.listener = &http.Server{
 		Addr:    socket,
 		Handler: h.router,
 	}
-
 }
 
 func (h *Http) CheckConfig() error {
