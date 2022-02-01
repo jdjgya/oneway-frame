@@ -9,7 +9,7 @@ type StageConfigSetter interface {
 type Stager interface {
 	StageConfigSetter
 	ConfigChecker
-	Execute(*map[string]string) error
+	Execute(*map[string]string) (bool, error)
 	Statuser
 }
 

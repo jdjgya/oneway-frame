@@ -46,8 +46,8 @@ func (d *DummyRequester) CheckConfig() error {
 	return validate.Struct(d.config)
 }
 
-func (d *DummyRequester) Execute(job *map[string]string) error {
-	return nil
+func (d *DummyRequester) Execute(job *map[string]string) (bool, error) {
+	return true, nil
 }
 
 func (d *DummyRequester) AddSuccess() {

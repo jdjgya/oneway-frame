@@ -51,8 +51,8 @@ func (d *DummyProcessor) CheckConfig() error {
 	return d.validator.Struct(d.config)
 }
 
-func (d *DummyProcessor) Execute(job *map[string]string) error {
-	return nil
+func (d *DummyProcessor) Execute(job *map[string]string) (bool, error) {
+	return true, nil
 }
 
 func (d *DummyProcessor) AddSuccess() {

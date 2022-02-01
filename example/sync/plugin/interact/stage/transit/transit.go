@@ -51,8 +51,8 @@ func (d *DummyTransiter) CheckConfig() error {
 	return d.validator.Struct(d.config)
 }
 
-func (d *DummyTransiter) Execute(job *map[string]string) error {
-	return nil
+func (d *DummyTransiter) Execute(job *map[string]string) (bool, error) {
+	return true, nil
 }
 
 func (d *DummyTransiter) AddSuccess() {

@@ -60,12 +60,16 @@ func (m *DummyHandler) SetRouterStage(trans, proc, req string) {
 func (m *DummyHandler) post(g *gin.Context) {
 	dummyMsg := map[string]string{}
 	for _, stage := range m.stages {
-		err := stage.Execute(&dummyMsg)
+		goToNext, err := stage.Execute(&dummyMsg)
 		if err != nil {
 			stage.AddError()
+		} else {
+			stage.AddSuccess()
 		}
 
-		stage.AddSuccess()
+		if !goToNext {
+			break
+		}
 	}
 
 	g.JSON(http.StatusOK, response)
