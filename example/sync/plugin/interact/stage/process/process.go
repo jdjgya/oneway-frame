@@ -34,6 +34,12 @@ func init() {
 	}
 }
 
+func (d *DummyProcessor) New() process.Process {
+	return &DummyProcessor{
+		validator: validator.New(),
+	}
+}
+
 func (d *DummyProcessor) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
 

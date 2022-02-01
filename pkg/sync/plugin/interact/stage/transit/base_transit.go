@@ -7,5 +7,6 @@ var (
 )
 
 type Transit interface {
+	New() Transit
 	plug.Stager
 }

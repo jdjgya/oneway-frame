@@ -1,6 +1,7 @@
 package transit
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"github.com/goinggo/mapstructure"
@@ -25,16 +26,22 @@ type DummyTransiter struct {
 
 type config struct {
 	Name string
+	Echo string
 }
 
 func init() {
-	transit.Plugins[module] = &DummyTransiter{
+	transit.Plugins[module] = &DummyTransiter{}
+}
+
+func (d *DummyTransiter) New() transit.Transit {
+	return &DummyTransiter{
 		validator: validator.New(),
 	}
 }
 
 func (d *DummyTransiter) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
+	fmt.Println("init echo:", d.config.Echo)
 
 	d.log = log.GetLogger(module)
 	d.logf = d.log.Sugar()

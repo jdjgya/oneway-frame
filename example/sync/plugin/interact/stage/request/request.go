@@ -30,6 +30,10 @@ func init() {
 	request.Plugins[module] = &DummyRequester{}
 }
 
+func (d *DummyRequester) New() request.Request {
+	return &DummyRequester{}
+}
+
 func (d *DummyRequester) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
 

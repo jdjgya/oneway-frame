@@ -3,23 +3,25 @@ interact:
   address: "0.0.0.0"
   port: 80
   patterns:
-  - name: "dummy"
+  - name: "dummy0"
     method: "POST"
     path: "/apis/dummy1"
     timeout: 10
     transit:
       name: "dummy"
+      echo: "1"
     process:
       name: "dummy"
     request:
       name: "dummy"
       retry: 3
-  - name: "dummy2"
+  - name: "dummy1"
     method: "POST"
     path: "/apis/dummy2"
     timeout: 10
     transit:
       name: "dummy"
+      echo: "2"
     process:
       name: "dummy"
     request:

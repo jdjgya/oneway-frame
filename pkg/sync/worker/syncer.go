@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"strconv"
+
 	"github.com/jdjgya/service-frame/pkg/config"
 	"github.com/jdjgya/service-frame/pkg/log"
 	"github.com/jdjgya/service-frame/pkg/sync/plugin"
@@ -34,11 +36,8 @@ type (
 )
 
 type Syncer struct {
-	Interact     string
-	StageTransit string
-	StageProcess string
-	StageRequest string
-	CronJobs     []string
+	Interact string
+	CronJobs []string
 
 	log  *zap.Logger
 	logf *zap.SugaredLogger
@@ -53,106 +52,99 @@ func InitWorker() Worker {
 	}
 }
 
-func (r *Syncer) setStagerConfig(stager string, stageConfig interface{}) {
+func (s *Syncer) setStagerConfig(stager string, stageConfig interface{}) {
 	plug.Stagers[stager].SetConfig(stageConfig)
 	err := plug.Stagers[stager].CheckConfig()
 	if err != nil {
-		r.logf.Error(err)
+		s.logf.Error(err)
 		osExit(1)
 	}
 }
 
-func (r *Syncer) getStagerConfig(stageType string, stageIndex int, rawConf interface{}) (string, interface{}) {
+func (s *Syncer) getStagerConfig(stageType string, stageIndex int, rawConf interface{}) (string, interface{}) {
 	var stager string
 	stageConfig := rawConf.(leafConfType)[stageType]
+	stageName := stageConfig.(leafConfType)[name].(string)
+	stager = strings.Join([]string{stageType, stageName, strconv.Itoa(stageIndex)}, "-")
 
 	switch stageType {
 	case plugin.StageTransit:
-		stageName := stageConfig.(leafConfType)[name].(string)
-		stager = strings.Join([]string{stageType, stageName}, "-")
-
-		r.StageTransit = stageName
-		plugin.ActivatedTransit[stageIndex] = stageName
-		plug.Stagers[stager] = transit.Plugins[r.StageTransit]
+		plugin.ActivatedTransit[stageIndex] = stager
+		transit.Plugins[stager] = transit.Plugins[stageName].New()
+		plug.Stagers[stager] = transit.Plugins[stager]
 
 	case plugin.StageProcess:
-		stageName := stageConfig.(leafConfType)[name].(string)
-		stager = strings.Join([]string{stageType, stageName}, "-")
-
-		r.StageProcess = stageName
-		plugin.ActivatedProcess[stageIndex] = stageName
-		plug.Stagers[stager] = process.Plugins[r.StageProcess]
+		plugin.ActivatedProcess[stageIndex] = stager
+		process.Plugins[stager] = process.Plugins[stageName].New()
+		plug.Stagers[stager] = process.Plugins[stager]
 
 	case plugin.StageRequest:
-		stageName := stageConfig.(leafConfType)[name].(string)
-		stager = strings.Join([]string{stageType, stageName}, "-")
-
-		r.StageRequest = stageName
-		plugin.ActivatedRequest[stageIndex] = stageName
-		plug.Stagers[stager] = request.Plugins[r.StageRequest]
+		plugin.ActivatedRequest[stageIndex] = stager
+		request.Plugins[stager] = request.Plugins[stageName].New()
+		plug.Stagers[stager] = request.Plugins[stager]
 	}
 
 	return stager, stageConfig
 }
 
-func (r *Syncer) SetStager(stageType string, stageIndex int, stageConfig interface{}) {
-	stager, stageConfig := r.getStagerConfig(stageType, stageIndex, stageConfig)
-	r.setStagerConfig(stager, stageConfig)
+func (s *Syncer) SetStager(stageType string, stageIndex int, stageConfig interface{}) {
+	stager, stageConfig := s.getStagerConfig(stageType, stageIndex, stageConfig)
+	s.setStagerConfig(stager, stageConfig)
 }
 
-func (r *Syncer) setParterConfig(parter string, pluginConf interface{}) {
+func (s *Syncer) setParterConfig(parter string, pluginConf interface{}) {
 	plug.Parters[parter].SetConfig(pluginConf)
 	err := plug.Parters[parter].CheckConfig()
 	if err != nil {
-		r.logf.Error(err)
+		s.logf.Error(err)
 		osExit(1)
 	}
 }
 
-func (r *Syncer) getPatternConfs(pluginConf interface{}) []interface{} {
+func (s *Syncer) getPatternConfs(pluginConf interface{}) []interface{} {
 	patterns := pluginConf.(rootConfType)["patterns"]
 	return patterns.([]interface{})
 }
 
-func (r *Syncer) getParterConfig(pluginType string) (string, interface{}) {
+func (s *Syncer) getParterConfig(pluginType string) (string, interface{}) {
 	rawConf := configer.Get(pluginType)
 	pluginName := rawConf.(rootConfType)[name].(string)
-	r.Interact = pluginName
+	s.Interact = pluginName
 
 	parter := strings.Join([]string{pluginType, pluginName}, "-")
-	plug.Parters[parter] = interact.Plugins[r.Interact]
+	plug.Parters[parter] = interact.Plugins[s.Interact]
 
 	return parter, rawConf
 }
 
-func (r *Syncer) SetParter(pluginType string) {
-	parter, pluginConf := r.getParterConfig(pluginType)
-	patternConfs := r.getPatternConfs(pluginConf)
+func (s *Syncer) SetParter(pluginType string) {
+	parter, pluginConf := s.getParterConfig(pluginType)
+	patternConfs := s.getPatternConfs(pluginConf)
 
 	plugin.ActivatedTransit = make([]string, len(patternConfs))
 	plugin.ActivatedProcess = make([]string, len(patternConfs))
 	plugin.ActivatedRequest = make([]string, len(patternConfs))
 
 	for patternIndex, patternConf := range patternConfs {
-		r.SetStager(plugin.StageTransit, patternIndex, patternConf)
-		r.SetStager(plugin.StageProcess, patternIndex, patternConf)
-		r.SetStager(plugin.StageRequest, patternIndex, patternConf)
+		s.SetStager(plugin.StageTransit, patternIndex, patternConf)
+		s.SetStager(plugin.StageProcess, patternIndex, patternConf)
+		s.SetStager(plugin.StageRequest, patternIndex, patternConf)
 	}
 
-	r.setParterConfig(parter, pluginConf)
+	s.setParterConfig(parter, pluginConf)
 }
 
-func (r *Syncer) StartParters() {
-	r.logf.Infof("start interact plugin(%s)", r.Interact)
-	go interact.Plugins[r.Interact].DoInteract()
+func (s *Syncer) StartParters() {
+	s.logf.Infof("start interact plugin(%s)", s.Interact)
+	go interact.Plugins[s.Interact].DoInteract()
 }
 
-func (r *Syncer) StopParters() {
-	interact.Plugins[r.Interact].Stop()
-	r.logf.Infof("stop input plugin(%s)", r.Interact)
+func (s *Syncer) StopParters() {
+	interact.Plugins[s.Interact].Stop()
+	s.logf.Infof("stop input plugin(%s)", s.Interact)
 }
 
-func (r *Syncer) getCronnerConfig(pluginType string) map[string]leafConfType {
+func (s *Syncer) getCronnerConfig(pluginType string) map[string]leafConfType {
 	cronConfigs := make(map[string]leafConfType)
 	rawConfig := reflect.ValueOf(configer.Get(pluginType))
 
@@ -169,35 +161,35 @@ func (r *Syncer) getCronnerConfig(pluginType string) map[string]leafConfType {
 	return cronConfigs
 }
 
-func (r *Syncer) setCronnerConfig(pluginType string, cronConfigs map[string]leafConfType) {
+func (s *Syncer) setCronnerConfig(pluginType string, cronConfigs map[string]leafConfType) {
 	for cronName, cronConfig := range cronConfigs {
 		cronner := strings.Join([]string{pluginType, cronName}, "-")
 		plug.Cronners[cronner].SetConfig(cronConfig)
 		err := plug.Cronners[cronner].CheckConfig()
 		if err != nil {
-			r.logf.Errorf("failed to set cronjob plugin(%s). error: %s", cronName, err.Error())
+			s.logf.Errorf("failed to set cronjob plugin(%s). error: %s", cronName, err.Error())
 			osExit(1)
 		}
 
-		r.CronJobs = append(r.CronJobs, cronName)
+		s.CronJobs = append(s.CronJobs, cronName)
 	}
 }
 
-func (r *Syncer) SetCronner(pluginType string) {
-	cronConfigs := r.getCronnerConfig(pluginType)
-	r.setCronnerConfig(pluginType, cronConfigs)
+func (s *Syncer) SetCronner(pluginType string) {
+	cronConfigs := s.getCronnerConfig(pluginType)
+	s.setCronnerConfig(pluginType, cronConfigs)
 }
 
-func (r *Syncer) StartCronners() {
-	for _, cronName := range r.CronJobs {
-		r.logf.Infof("start cronjob plugin(%s)", cronName)
+func (s *Syncer) StartCronners() {
+	for _, cronName := range s.CronJobs {
+		s.logf.Infof("start cronjob plugin(%s)", cronName)
 		go cronjob.Plugin[cronName].DoSchedule()
 	}
 }
 
-func (r *Syncer) StopCronners() {
-	for _, cronName := range r.CronJobs {
+func (s *Syncer) StopCronners() {
+	for _, cronName := range s.CronJobs {
 		cronjob.Plugin[cronName].Stop()
-		r.logf.Infof("stop cronjob plugin(%s)", cronName)
+		s.logf.Infof("stop cronjob plugin(%s)", cronName)
 	}
 }

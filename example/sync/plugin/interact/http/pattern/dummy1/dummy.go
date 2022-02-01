@@ -1,7 +1,8 @@
-package dummy
+package dummy1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	module   = "dummy"
+	module   = "dummy1"
 	response = "dummy response"
 )
 
@@ -52,9 +53,20 @@ func (m *DummyHandler) RegisterRouter(router *gin.Engine, method string, path st
 }
 
 func (m *DummyHandler) SetRouterStage(trans, proc, req string) {
+	fmt.Println(trans, proc, req)
 	m.stages = append(m.stages, transit.Plugins[trans], process.Plugins[proc], request.Plugins[req])
 }
 
 func (m *DummyHandler) post(g *gin.Context) {
+	dummyMsg := map[string]string{}
+	for _, stage := range m.stages {
+		err := stage.Execute(&dummyMsg)
+		if err != nil {
+			stage.AddError()
+		}
+
+		stage.AddSuccess()
+	}
+
 	g.JSON(http.StatusOK, response)
 }

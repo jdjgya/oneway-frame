@@ -9,5 +9,6 @@ var (
 )
 
 type Request interface {
+	New() Request
 	plug.Stager
 }

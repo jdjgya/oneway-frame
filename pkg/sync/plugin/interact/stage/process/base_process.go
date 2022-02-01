@@ -7,5 +7,6 @@ var (
 )
 
 type Process interface {
+	New() Process
 	plug.Stager
 }
