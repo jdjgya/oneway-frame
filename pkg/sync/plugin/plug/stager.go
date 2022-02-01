@@ -2,10 +2,6 @@ package plug
 
 var Stagers = make(map[string]Stager)
 
-type StageNewer interface {
-	New() Stager
-}
-
 type StageConfigSetter interface {
 	SetConfig(interface{})
 }
