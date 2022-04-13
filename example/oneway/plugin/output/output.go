@@ -2,6 +2,7 @@ package output
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/goinggo/mapstructure"
@@ -28,20 +29,21 @@ type DummyOutputer struct {
 }
 
 type config struct {
-	Name string `validate:"required"`
+	Name  string `validate:"required"`
+	Group string `validate:"required"`
 }
 
 func init() {
-	output.Plugin[module] = &DummyOutputer{
-		wg: &sync.WaitGroup{},
-	}
+	output.Plugin[module] = &DummyOutputer{}
 }
 
 func (d *DummyOutputer) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
 
+	d.wg = &sync.WaitGroup{}
+
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.output = output.WrapWithOutputLoop(d.ctx, d.wg, d.coreFunc)
+	d.output = output.WrapWithOutputLoop(d.ctx, d.wg, d.Group, d.coreFunc)
 
 	d.log = log.GetLogger(module)
 	d.logf = d.log.Sugar()
@@ -53,7 +55,8 @@ func (d *DummyOutputer) CheckConfig() error {
 }
 
 func (d *DummyOutputer) coreFunc(msg map[string]string) error {
-	d.log.Info("dummy output demo")
+	b, _ := json.Marshal(msg)
+	d.log.Info(string(b))
 	return nil
 }
 

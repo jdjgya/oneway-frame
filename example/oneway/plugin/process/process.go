@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/goinggo/mapstructure"
@@ -28,19 +29,21 @@ type DummyProcessor struct {
 }
 
 type config struct {
-	Name string `validate:"required"`
+	Name  string `validate:"required"`
+	Group string `validate:"required"`
 }
 
 func init() {
-	process.Plugin[module] = &DummyProcessor{
-		wg: &sync.WaitGroup{},
-	}
+	process.Plugin[module] = &DummyProcessor{}
 }
 
 func (d *DummyProcessor) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
+
+	d.wg = &sync.WaitGroup{}
+
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.process = process.WrapWithProcessLoop(d.ctx, d.wg, d.coreFunc)
+	d.process = process.WrapWithProcessLoop(d.ctx, d.wg, d.Group, d.coreFunc)
 
 	d.log = log.GetLogger(module)
 	d.logf = d.log.Sugar()
@@ -52,7 +55,9 @@ func (d *DummyProcessor) CheckConfig() error {
 }
 
 func (d *DummyProcessor) coreFunc(msg map[string]string, isChnOpen bool) (map[string]string, error) {
-	d.log.Info("dummy process demo")
+	b, _ := json.Marshal(msg)
+	d.log.Info(string(b))
+
 	return msg, nil
 }
 

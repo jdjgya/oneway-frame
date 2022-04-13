@@ -18,7 +18,7 @@ type Output interface {
 	DoOutput()
 }
 
-func WrapWithOutputLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(map[string]string) error) func() {
+func WrapWithOutputLoop(ctx context.Context, wg *sync.WaitGroup, group string, coreFunc func(map[string]string) error) func() {
 	return func() {
 		wg.Add(1)
 		defer wg.Done()
@@ -27,7 +27,7 @@ func WrapWithOutputLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(m
 			select {
 			case <-ctx.Done():
 				return
-			case message, isChnOpen := <-plugin.P2OChan:
+			case message, isChnOpen := <-plugin.P2OChan[group]:
 				switch isChnOpen {
 				case true:
 					err := coreFunc(message)

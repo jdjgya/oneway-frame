@@ -115,10 +115,6 @@ func (c *controller) initPluginParams() {
 	plugin.IsOneTimeExec = c.isOneTimeExec
 	plugin.ChanSize = configer.GetInt32(chanSize)
 
-	plugin.I2TChan = make(chan []byte, plugin.ChanSize)
-	plugin.T2PChan = make(chan map[string]string, plugin.ChanSize)
-	plugin.P2OChan = make(chan map[string]string, plugin.ChanSize)
-
 	plugin.Metrics = &plugin.Metric{}
 	plugin.Records = &plugin.Record{}
 }
@@ -142,13 +138,13 @@ func (c *controller) ActivateService() {
 	c.Worker.SetParter(plugin.Transit)
 	c.Worker.SetParter(plugin.Process)
 	c.Worker.SetParter(plugin.Output)
-	c.Worker.SetCronner(plugin.CronJob)
+	// c.Worker.SetCronner(plugin.CronJob)
 }
 
 func (c *controller) Start() {
 	c.log.Info("activating worker")
 	c.Worker.StartParters()
-	c.Worker.StartCronners()
+	// c.Worker.StartCronners()
 	c.wg.Add(1)
 }
 

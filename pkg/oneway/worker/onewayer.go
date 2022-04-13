@@ -1,8 +1,10 @@
 package worker
 
 import (
+	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/jdjgya/service-frame/pkg/config"
@@ -14,6 +16,7 @@ import (
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin/plug"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin/process"
 	"github.com/jdjgya/service-frame/pkg/oneway/plugin/transit"
+	"github.com/mohae/deepcopy"
 	"go.uber.org/zap"
 )
 
@@ -28,10 +31,16 @@ var (
 )
 
 type Onewayer struct {
-	Input    string
-	Transit  string
-	Process  string
-	Output   string
+	// Input    string
+	// Transit  string
+	// Process  string
+	// Output   string
+
+	Inputs    []string
+	Transits  []string
+	Processes []string
+	Outputs   []string
+
 	CronJobs []string
 	log      *zap.Logger
 	logf     *zap.SugaredLogger
@@ -46,35 +55,88 @@ func InitWorker() Worker {
 	}
 }
 
-func (o *Onewayer) getParterConfig(pluginType string) (string, interface{}) {
-	rawConfig := configer.Get(pluginType)
-	pluginName := (rawConfig.(map[string]interface{}))[name].(string)
-	parterName := strings.Join([]string{pluginType, pluginName}, "-")
+func (o *Onewayer) getParterConfig(pluginType string) ([]string, []interface{}) {
+	parterNames := []string{}
+	rawConfigs := configer.Get(pluginType)
 
-	switch pluginType {
-	case plugin.Input:
-		o.Input = pluginName
-		plug.Parters[parterName] = input.Plugin[pluginName]
-	case plugin.Transit:
-		o.Transit = pluginName
-		plug.Parters[parterName] = transit.Plugin[pluginName]
-	case plugin.Process:
-		o.Process = pluginName
-		plug.Parters[parterName] = process.Plugin[pluginName]
-	case plugin.Output:
-		o.Output = pluginName
-		plug.Parters[parterName] = output.Plugin[pluginName]
+	for index, rawConfig := range rawConfigs.([]interface{}) {
+		subConfig := (rawConfig.(map[interface{}]interface{}))
+
+		pluginName := subConfig[name].(string)
+		pluginGroup := subConfig["group"].(string)
+
+		parterName := strings.Join([]string{pluginType, pluginName, strconv.Itoa(index)}, "-")
+
+		switch pluginType {
+		case plugin.Input:
+			// o.Input = pluginName
+			o.Inputs = append(o.Inputs, parterName)
+			obj := deepcopy.Copy(input.Plugin[pluginName]).(input.Input)
+			plug.Parters[parterName] = obj
+			input.Plugin[parterName] = obj
+
+			plugin.I2TChan[pluginGroup] = make(chan []byte, plugin.ChanSize)
+		case plugin.Transit:
+			// o.Transit = pluginName
+			o.Transits = append(o.Transits, parterName)
+			plug.Parters[parterName] = deepcopy.Copy(transit.Plugin[pluginName]).(transit.Transit)
+			transit.Plugin[parterName] = plug.Parters[parterName].(transit.Transit)
+
+			plugin.T2PChan[pluginGroup] = make(chan map[string]string, plugin.ChanSize)
+
+		case plugin.Process:
+			// o.Process = pluginName
+			o.Processes = append(o.Processes, parterName)
+			plug.Parters[parterName] = deepcopy.Copy(process.Plugin[pluginName]).(process.Process)
+			process.Plugin[parterName] = plug.Parters[parterName].(process.Process)
+
+			plugin.P2OChan[pluginGroup] = make(chan map[string]string, plugin.ChanSize)
+
+		case plugin.Output:
+			// o.Output = pluginName
+			o.Outputs = append(o.Outputs, parterName)
+			plug.Parters[parterName] = deepcopy.Copy(output.Plugin[pluginName]).(output.Output)
+			output.Plugin[parterName] = plug.Parters[parterName].(output.Output)
+
+		}
+
+		parterNames = append(parterNames, parterName)
 	}
 
-	return parterName, rawConfig
+	// os.Exit(1)
+
+	// parterName := strings.Join([]string{pluginType, pluginName}, "-")
+
+	// switch pluginType {
+	// case plugin.Input:
+	// 	o.Input = pluginName
+	// 	plug.Parters[parterName] = input.Plugin[pluginName]
+	// case plugin.Transit:
+	// 	o.Transit = pluginName
+	// 	plug.Parters[parterName] = transit.Plugin[pluginName]
+	// case plugin.Process:
+	// 	o.Process = pluginName
+	// 	plug.Parters[parterName] = process.Plugin[pluginName]
+	// case plugin.Output:
+	// 	o.Output = pluginName
+	// 	plug.Parters[parterName] = output.Plugin[pluginName]
+	// }
+
+	// return parterName, rawConfig
+
+	return parterNames, rawConfigs.([]interface{})
 }
 
-func (o *Onewayer) setParterConfig(parterName string, parterConfig interface{}) {
-	plug.Parters[parterName].SetConfig(parterConfig)
-	err := plug.Parters[parterName].CheckConfig()
-	if err != nil {
-		o.logf.Errorf("failed to set parter config. error details: %s", err.Error())
-		osExit(1)
+func (o *Onewayer) setParterConfig(parterNames []string, parterConfigs []interface{}) {
+	for i := 0; i < len(parterNames); i++ {
+		pName := parterNames[i]
+		fmt.Println("pName", pName)
+		plug.Parters[pName].SetConfig(parterConfigs[i])
+		err := plug.Parters[pName].CheckConfig()
+		if err != nil {
+			o.logf.Errorf("failed to set parter config. error details: %s", err.Error())
+			osExit(1)
+		}
 	}
 }
 
@@ -84,31 +146,48 @@ func (o *Onewayer) SetParter(pluginType string) {
 }
 
 func (o *Onewayer) StartParters() {
-	o.logf.Infof("start input plugin(%s)", o.Input)
-	go input.Plugin[o.Input].DoInput()
+	for _, inputname := range o.Inputs {
+		o.logf.Infof("start input plugin(%s)", inputname)
+		go input.Plugin[inputname].DoInput()
+	}
 
-	o.logf.Infof("start transit plugin(%s)", o.Transit)
-	go transit.Plugin[o.Transit].DoTransit()
+	for _, transitname := range o.Transits {
+		o.logf.Infof("start transit plugin(%s)", transitname)
+		go transit.Plugin[transitname].DoTransit()
+	}
 
-	o.logf.Infof("start process plugin(%s)", o.Process)
-	go process.Plugin[o.Process].DoProcess()
+	for _, processname := range o.Processes {
+		o.logf.Infof("start process plugin(%s)", processname)
+		go process.Plugin[processname].DoProcess()
+	}
 
-	o.logf.Infof("start output plugin(%s)", o.Output)
-	go output.Plugin[o.Output].DoOutput()
+	for _, outputname := range o.Outputs {
+		o.logf.Infof("start output plugin(%s)", outputname)
+		go output.Plugin[outputname].DoOutput()
+	}
 }
 
 func (o *Onewayer) StopParters() {
-	input.Plugin[o.Input].Stop()
-	o.logf.Infof("stop input plugin(%s)", o.Input)
+	o.logf.Infof("start input plugin(%s)", o.Inputs)
+	for _, inputname := range o.Inputs {
+		input.Plugin[inputname].Stop()
+		o.logf.Infof("stop input plugin(%s)", inputname)
+	}
 
-	transit.Plugin[o.Transit].Stop()
-	o.logf.Infof("stop transit plugin(%s)", o.Transit)
+	for _, transitname := range o.Transits {
+		transit.Plugin[transitname].Stop()
+		o.logf.Infof("stop transit plugin(%s)", transitname)
+	}
 
-	process.Plugin[o.Process].Stop()
-	o.logf.Infof("stop process plugin(%s)", o.Process)
+	for _, processname := range o.Processes {
+		process.Plugin[processname].Stop()
+		o.logf.Infof("stop process plugin(%s)", processname)
+	}
 
-	output.Plugin[o.Output].Stop()
-	o.logf.Infof("stop output plugin(%s)", o.Output)
+	for _, outputname := range o.Outputs {
+		output.Plugin[outputname].Stop()
+		o.logf.Infof("stop output plugin(%s)", outputname)
+	}
 }
 
 func (o *Onewayer) getCronnerConfig(pluginType string) map[string]map[interface{}]interface{} {

@@ -2,6 +2,7 @@ package transit
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
 	"github.com/goinggo/mapstructure"
@@ -28,20 +29,20 @@ type DummyTransitter struct {
 }
 
 type config struct {
-	Name string `validate:"required"`
+	Name  string `validate:"required"`
+	Group string `validate:"required"`
 }
 
 func init() {
-	transit.Plugin[module] = &DummyTransitter{
-		wg: &sync.WaitGroup{},
-	}
+	transit.Plugin[module] = &DummyTransitter{}
 }
 
 func (d *DummyTransitter) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
 
+	d.wg = &sync.WaitGroup{}
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.transit = transit.WrapWithTransitLoop(d.ctx, d.wg, d.coreFunc)
+	d.transit = transit.WrapWithTransitLoop(d.ctx, d.wg, d.Group, d.coreFunc)
 
 	d.log = log.GetLogger(module)
 	d.logf = d.log.Sugar()
@@ -58,6 +59,9 @@ func (d *DummyTransitter) coreFunc(msgs []byte) ([]map[string]string, error) {
 
 	var msgList []map[string]string
 	msgList = append(msgList, msg)
+
+	b, _ := json.Marshal(msgList)
+	d.log.Info(string(b))
 
 	return msgList, nil
 }

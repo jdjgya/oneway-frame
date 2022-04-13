@@ -2,6 +2,7 @@ package input
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -30,23 +31,25 @@ type DummyInputter struct {
 
 type config struct {
 	Name          string `validate:"required"`
+	Group         string `validate:"required"`
 	FetchInterval int    `validate:"required"`
 }
 
 func init() {
-	input.Plugin[module] = &DummyInputter{
-		wg: &sync.WaitGroup{},
-	}
+	input.Plugin[module] = &DummyInputter{}
 }
 
 func (d *DummyInputter) SetConfig(conf interface{}) {
 	_ = mapstructure.Decode(conf, &d.config)
 
+	d.wg = &sync.WaitGroup{}
 	d.ctx, d.cancel = context.WithCancel(context.Background())
-	d.input = input.WrapWithInputLoop(d.ctx, d.wg, d.coreFunc, time.Duration(d.FetchInterval))
+	d.input = input.WrapWithInputLoop(d.ctx, d.wg, d.Group, d.coreFunc, time.Duration(d.FetchInterval))
 
 	d.log = log.GetLogger(module)
 	d.logf = d.log.Sugar()
+
+	fmt.Println("after setconfig")
 }
 
 func (d *DummyInputter) CheckConfig() error {
@@ -55,6 +58,7 @@ func (d *DummyInputter) CheckConfig() error {
 }
 
 func (d *DummyInputter) coreFunc() ([]byte, error) {
+	fmt.Println("dummy input demo")
 	return []byte("dummy input demo"), nil
 }
 

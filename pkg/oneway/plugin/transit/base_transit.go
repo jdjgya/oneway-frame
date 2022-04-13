@@ -18,7 +18,7 @@ type Transit interface {
 	DoTransit()
 }
 
-func WrapWithTransitLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func([]byte) ([]map[string]string, error)) func() {
+func WrapWithTransitLoop(ctx context.Context, wg *sync.WaitGroup, group string, coreFunc func([]byte) ([]map[string]string, error)) func() {
 	return func() {
 		wg.Add(1)
 		defer wg.Done()
@@ -27,7 +27,7 @@ func WrapWithTransitLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(
 			select {
 			case <-ctx.Done():
 				return
-			case msg, isChnOpen := <-plugin.I2TChan:
+			case msg, isChnOpen := <-plugin.I2TChan[group]:
 				switch isChnOpen {
 				case true:
 					jobs, err := coreFunc(msg)
@@ -37,11 +37,11 @@ func WrapWithTransitLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func(
 					}
 
 					for _, message := range jobs {
-						plugin.T2PChan <- message
+						plugin.T2PChan[group] <- message
 						plugin.Metrics.TransitOK++
 					}
 				case false:
-					close(plugin.T2PChan)
+					close(plugin.T2PChan[group])
 					plugin.TransitStatus.Completed = true
 					return
 				}

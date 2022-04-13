@@ -1,0 +1,32 @@
+input:
+  - name: "dummy"
+    group: "1"
+    fetchInterval: 5
+  - name: "dummy"
+    group: "2"
+    fetchInterval: 2
+
+transit:
+  - name: "dummy"
+    group: "1"
+  - name: "dummy"
+    group: "2"
+
+process:
+  - name: "dummy"
+    group: "1"
+  - name: "dummy"
+    group: "2"
+
+output:
+  - name: "dummy"
+    group: "1"
+  - name: "dummy"
+    group: "2"
+
+cronjobs:
+  - name: "dummy"
+    schedule: "0 */1 * * * *"
+
+channelSize: 1000
+oneTimeExec: False

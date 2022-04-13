@@ -19,7 +19,7 @@ type Input interface {
 	DoInput()
 }
 
-func WrapWithInputLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func() ([]byte, error), interval time.Duration) func() {
+func WrapWithInputLoop(ctx context.Context, wg *sync.WaitGroup, group string, coreFunc func() ([]byte, error), interval time.Duration) func() {
 	return func() {
 		wg.Add(1)
 		defer wg.Done()
@@ -35,11 +35,11 @@ func WrapWithInputLoop(ctx context.Context, wg *sync.WaitGroup, coreFunc func() 
 					continue
 				}
 
-				plugin.I2TChan <- msg
+				plugin.I2TChan[group] <- msg
 				plugin.Metrics.InputOK++
 
 				if plugin.IsOneTimeExec {
-					close(plugin.I2TChan)
+					close(plugin.I2TChan[group])
 					plugin.InputStatus.Completed = true
 					return
 				}

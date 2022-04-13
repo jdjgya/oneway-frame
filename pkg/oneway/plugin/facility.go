@@ -12,9 +12,13 @@ var (
 	Service string
 
 	ChanSize int32
-	I2TChan  = make(chan []byte)
-	T2PChan  = make(chan map[string]string)
-	P2OChan  = make(chan map[string]string)
+	// I2TChan  = make(chan []byte)
+	// T2PChan  = make(chan map[string]string)
+	// P2OChan  = make(chan map[string]string)
+
+	I2TChan = make(map[string](chan []byte))
+	T2PChan = make(map[string](chan map[string]string))
+	P2OChan = make(map[string](chan map[string]string))
 
 	Metrics = &Metric{}
 	Records = &Record{}
